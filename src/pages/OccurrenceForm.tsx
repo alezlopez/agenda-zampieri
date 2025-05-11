@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -62,7 +61,7 @@ const OccurrenceForm = () => {
       setStudent(foundStudent);
     } else {
       setStudent(null);
-      toast("Aluno não encontrado", {
+      toast.error("Aluno não encontrado", {
         description: "Nenhum aluno encontrado com este código."
       });
     }
@@ -70,9 +69,8 @@ const OccurrenceForm = () => {
 
   const onSubmit = async (values: OccurrenceFormValues) => {
     if (!student) {
-      toast("Aluno não encontrado", {
-        description: "Por favor, busque um aluno válido antes de enviar.",
-        variant: "destructive",
+      toast.error("Aluno não encontrado", {
+        description: "Por favor, busque um aluno válido antes de enviar."
       });
       return;
     }
@@ -110,9 +108,8 @@ const OccurrenceForm = () => {
       form.reset();
     } catch (error) {
       console.error("Erro ao enviar formulário:", error);
-      toast("Erro ao enviar", {
-        description: "Ocorreu um erro ao enviar o formulário. Tente novamente.",
-        variant: "destructive",
+      toast.error("Erro ao enviar", {
+        description: "Ocorreu um erro ao enviar o formulário. Tente novamente."
       });
     } finally {
       setIsLoading(false);

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -90,9 +89,8 @@ const AnnouncementForm = () => {
       form.reset();
     } catch (error) {
       console.error("Erro ao enviar formulário:", error);
-      toast("Erro ao enviar", {
-        description: "Ocorreu um erro ao enviar o formulário. Tente novamente.",
-        variant: "destructive",
+      toast.error("Erro ao enviar", {
+        description: "Ocorreu um erro ao enviar o formulário. Tente novamente."
       });
     } finally {
       setIsLoading(false);
