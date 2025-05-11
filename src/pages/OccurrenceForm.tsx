@@ -273,7 +273,7 @@ const OccurrenceForm = () => {
                 </Button>
                 <Button 
                   type="submit"
-                  className="bg-cz-red hover:bg-cz-red/90"
+                  className="bg-cz-red hover:bg-cz-red/90 text-white"
                   disabled={isLoading || !student}
                 >
                   {isLoading ? "Enviando..." : "Enviar"}

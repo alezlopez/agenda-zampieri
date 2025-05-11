@@ -1,3 +1,4 @@
+
 import { Discipline, Class, Student } from "../types";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,12 +71,19 @@ export async function updateUserPassword(password: string) {
 export const getDisciplines = async () => {
   try {
     const { data, error } = await supabase
-      .from('disciplinas')
+      .from('disciplinas_alunos')
       .select('*')
-      .order('nome');
+      .order('disciplina');
       
     if (error) throw error;
-    return data || [];
+    
+    // Map the data to match the Discipline interface
+    const disciplines: Discipline[] = data.map(item => ({
+      id: String(item.id),
+      nome: item.disciplina
+    }));
+    
+    return disciplines;
   } catch (error) {
     console.error('Error getting disciplines:', error);
     return [];
@@ -85,12 +93,19 @@ export const getDisciplines = async () => {
 export const getClasses = async () => {
   try {
     const { data, error } = await supabase
-      .from('turmas')
+      .from('turmas_alunos')
       .select('*')
-      .order('nome');
+      .order('Turma');
       
     if (error) throw error;
-    return data || [];
+    
+    // Map the data to match the Class interface
+    const classes: Class[] = data.map(item => ({
+      id: String(item.Código),
+      nome: item.Turma || ""
+    }));
+    
+    return classes;
   } catch (error) {
     console.error('Error getting classes:', error);
     return [];
@@ -102,11 +117,23 @@ export const findStudentByName = async (name: string) => {
     const { data, error } = await supabase
       .from('relacao_alunos')
       .select('*')
-      .ilike('nome', `%${name}%`)
+      .ilike('Nome do Aluno', `%${name}%`)
       .limit(1);
       
     if (error) throw error;
-    return data?.[0] || null;
+    
+    if (!data || data.length === 0) return null;
+    
+    // Map the data to match the Student interface
+    const student: Student = {
+      id: String(data[0]["Código do Aluno"]),
+      codigo: String(data[0]["Código do Aluno"]),
+      nome: data[0]["Nome do Aluno"] || "",
+      turma_id: data[0]["Turma"] || "",
+      curso: data[0]["Curso do Aluno"] || ""
+    };
+    
+    return student;
   } catch (error) {
     console.error('Error finding student:', error);
     return null;
@@ -129,7 +156,8 @@ export async function getStudents(): Promise<Student[]> {
       id: String(item["Código do Aluno"]),
       codigo: String(item["Código do Aluno"]),
       nome: item["Nome do Aluno"] || "",
-      turma_id: ""  // This field isn't directly available in the data
+      turma_id: item["Turma"] || "",
+      curso: item["Curso do Aluno"] || ""
     })) || [];
   } catch (error) {
     console.error("Error fetching students:", error);
@@ -168,7 +196,8 @@ export async function findStudentByCode(code: string): Promise<Student | null> {
       id: String(data["Código do Aluno"]),
       codigo: String(data["Código do Aluno"]),
       nome: data["Nome do Aluno"] || "",
-      turma_id: ""  // This field isn't directly available in the data
+      turma_id: data["Turma"] || "",
+      curso: data["Curso do Aluno"] || ""
     };
   } catch (error) {
     console.error("Error finding student:", error);

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -68,7 +69,7 @@ const AnnouncementForm = () => {
       
       const payload = {
         ...values,
-        professor: user?.email,
+        professor: user?.user_metadata?.name || user?.email,
         timestamp: new Date().toISOString(),
       };
       
@@ -113,10 +114,18 @@ const AnnouncementForm = () => {
             <h1 className="text-xl font-bold">Avisos e Comunicados</h1>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" className="text-cz-green hover:bg-cz-green/10" onClick={() => navigate("/dashboard")}>
+            <Button 
+              variant="ghost" 
+              className="text-cz-green hover:bg-cz-green/10 font-medium"  
+              onClick={() => navigate("/dashboard")}
+            >
               Voltar
             </Button>
-            <Button variant="ghost" className="text-cz-green hover:bg-cz-green/10" onClick={logout}>
+            <Button 
+              variant="ghost" 
+              className="text-cz-green hover:bg-cz-green/10 font-medium" 
+              onClick={logout}
+            >
               Sair
             </Button>
           </div>
@@ -234,7 +243,7 @@ const AnnouncementForm = () => {
                 </Button>
                 <Button 
                   type="submit"
-                  className="bg-cz-gold hover:bg-cz-gold/90 text-cz-green"
+                  className="bg-cz-gold hover:bg-cz-gold/90 text-cz-green font-medium"
                   disabled={isLoading}
                 >
                   {isLoading ? "Enviando..." : "Enviar"}

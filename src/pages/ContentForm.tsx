@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -59,7 +60,7 @@ const ContentForm = () => {
       
       const payload = {
         ...values,
-        professor: user?.email,
+        professor: user?.user_metadata?.name || user?.email,
         timestamp: new Date().toISOString(),
       };
       
@@ -223,7 +224,7 @@ const ContentForm = () => {
                 </Button>
                 <Button 
                   type="submit"
-                  className="bg-cz-green hover:bg-cz-green/90"
+                  className="bg-cz-green hover:bg-cz-green/90 text-white"
                   disabled={isLoading}
                 >
                   {isLoading ? "Enviando..." : "Enviar"}
