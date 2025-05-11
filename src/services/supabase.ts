@@ -1,5 +1,4 @@
 
-import { createClient } from "@supabase/supabase-js";
 import { Discipline, Class, Student } from "../types";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,15 +42,12 @@ export async function getSession() {
 
 export async function getDisciplines(): Promise<Discipline[]> {
   try {
-    // Fetching from disciplinas_alunos table and mapping to expected format
     const { data, error } = await supabase
       .from("disciplinas_alunos")
       .select("*");
 
     if (error) {
-      toast.error(`Erro ao carregar disciplinas: ${error.message}`, {
-        description: "Por favor, tente novamente.",
-      });
+      toast.error(`Erro ao carregar disciplinas: ${error.message}`);
       return [];
     }
 
@@ -62,9 +58,7 @@ export async function getDisciplines(): Promise<Discipline[]> {
     })) || [];
   } catch (error) {
     console.error("Error fetching disciplines:", error);
-    toast.error("Erro ao carregar disciplinas", {
-      description: "Por favor, tente novamente.",
-    });
+    toast.error("Erro ao carregar disciplinas");
     return [];
   }
 }
@@ -76,9 +70,7 @@ export async function getClasses(): Promise<Class[]> {
       .select("*");
 
     if (error) {
-      toast.error(`Erro ao carregar turmas: ${error.message}`, {
-        description: "Por favor, tente novamente.",
-      });
+      toast.error(`Erro ao carregar turmas: ${error.message}`);
       return [];
     }
 
@@ -89,9 +81,7 @@ export async function getClasses(): Promise<Class[]> {
     })) || [];
   } catch (error) {
     console.error("Error fetching classes:", error);
-    toast.error("Erro ao carregar turmas", {
-      description: "Por favor, tente novamente.",
-    });
+    toast.error("Erro ao carregar turmas");
     return [];
   }
 }
@@ -103,9 +93,7 @@ export async function getStudents(): Promise<Student[]> {
       .select("*");
 
     if (error) {
-      toast.error(`Erro ao carregar alunos: ${error.message}`, {
-        description: "Por favor, tente novamente.",
-      });
+      toast.error(`Erro ao carregar alunos: ${error.message}`);
       return [];
     }
 
@@ -118,26 +106,30 @@ export async function getStudents(): Promise<Student[]> {
     })) || [];
   } catch (error) {
     console.error("Error fetching students:", error);
-    toast.error("Erro ao carregar alunos", {
-      description: "Por favor, tente novamente.",
-    });
+    toast.error("Erro ao carregar alunos");
     return [];
   }
 }
 
 export async function findStudentByCode(code: string): Promise<Student | null> {
   try {
+    // Convert the string code to a number for the query
+    const numericCode = parseInt(code, 10);
+    
+    if (isNaN(numericCode)) {
+      toast.error("Código do aluno inválido");
+      return null;
+    }
+
     const { data, error } = await supabase
       .from("relacao_alunos")
       .select("*")
-      .eq("Código do Aluno", code)
+      .eq("Código do Aluno", numericCode)
       .single();
 
     if (error) {
       if (error.code !== "PGRST116") { // Not Found error
-        toast.error(`Erro ao buscar aluno: ${error.message}`, {
-          description: "Por favor, tente novamente.",
-        });
+        toast.error(`Erro ao buscar aluno: ${error.message}`);
       }
       return null;
     }
