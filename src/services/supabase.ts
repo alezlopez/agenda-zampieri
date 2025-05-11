@@ -2,12 +2,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { Discipline, Class, Student } from "../types";
 import { toast } from "sonner";
-
-// Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from "@/integrations/supabase/client";
 
 export async function signIn(email: string, password: string) {
   try {
