@@ -90,6 +90,8 @@ const ContentForm = () => {
     }
   };
 
+  const userName = user?.user_metadata?.name || user?.email;
+
   return (
     <div className="min-h-screen bg-muted/30">
       <header className="bg-cz-green text-white p-4 shadow-md">
@@ -104,10 +106,10 @@ const ContentForm = () => {
             <h1 className="text-xl font-bold">Lançamento de Conteúdo</h1>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="outline" className="text-white border-white hover:bg-white/10" onClick={() => navigate("/dashboard")}>
+            <Button variant="ghost" className="text-white hover:bg-white/10" onClick={() => navigate("/dashboard")}>
               Voltar
             </Button>
-            <Button variant="outline" className="text-white border-white hover:bg-white/10" onClick={logout}>
+            <Button variant="ghost" className="text-white hover:bg-white/10" onClick={logout}>
               Sair
             </Button>
           </div>
@@ -148,7 +150,7 @@ const ContentForm = () => {
               <div className="form-field">
                 <FormLabel>Professor</FormLabel>
                 <Input 
-                  value={user?.email || ""}
+                  value={userName}
                   disabled
                   className="bg-muted"
                 />

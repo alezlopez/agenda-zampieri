@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -12,11 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import { Discipline, Student, OccurrenceTypes } from "@/types";
 import { toast } from "sonner";
-import { getDisciplines, findStudentByCode } from "@/services/supabase";
+import { getDisciplines, findStudentByName } from "@/services/supabase";
 
 const occurrenceSchema = z.object({
   disciplina: z.string().min(1, "Selecione uma disciplina"),
-  codigo_aluno: z.string().min(1, "Código do aluno é obrigatório"),
+  nome_aluno: z.string().min(1, "Nome do aluno é obrigatório"),
   tipo_ocorrencia: z.string().min(1, "Selecione um tipo de ocorrência"),
   descricao: z.string().min(10, "A descrição deve ter pelo menos 10 caracteres"),
 });
@@ -31,11 +32,13 @@ const OccurrenceForm = () => {
   const [searchingStudent, setSearchingStudent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const userName = user?.user_metadata?.name || user?.email;
+
   const form = useForm<OccurrenceFormValues>({
     resolver: zodResolver(occurrenceSchema),
     defaultValues: {
       disciplina: "",
-      codigo_aluno: "",
+      nome_aluno: "",
       tipo_ocorrencia: "",
       descricao: "",
     },
@@ -50,11 +53,11 @@ const OccurrenceForm = () => {
     loadDisciplines();
   }, []);
 
-  const handleFindStudent = async (code: string) => {
-    if (!code) return;
+  const handleFindStudent = async (name: string) => {
+    if (!name) return;
     
     setSearchingStudent(true);
-    const foundStudent = await findStudentByCode(code);
+    const foundStudent = await findStudentByName(name);
     setSearchingStudent(false);
     
     if (foundStudent) {
@@ -62,7 +65,7 @@ const OccurrenceForm = () => {
     } else {
       setStudent(null);
       toast.error("Aluno não encontrado", {
-        description: "Nenhum aluno encontrado com este código."
+        description: "Nenhum aluno encontrado com este nome."
       });
     }
   };
@@ -82,7 +85,7 @@ const OccurrenceForm = () => {
       
       const payload = {
         ...values,
-        professor: user?.email,
+        professor: userName,
         aluno: student.nome,
         turma: student.turma_id,
         timestamp: new Date().toISOString(),
@@ -130,10 +133,10 @@ const OccurrenceForm = () => {
             <h1 className="text-xl font-bold">Ocorrência Individual</h1>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="outline" className="text-white border-white hover:bg-white/10" onClick={() => navigate("/dashboard")}>
+            <Button variant="ghost" className="text-white hover:bg-white/10" onClick={() => navigate("/dashboard")}>
               Voltar
             </Button>
-            <Button variant="outline" className="text-white border-white hover:bg-white/10" onClick={logout}>
+            <Button variant="ghost" className="text-white hover:bg-white/10" onClick={logout}>
               Sair
             </Button>
           </div>
@@ -174,7 +177,7 @@ const OccurrenceForm = () => {
               <div className="form-field">
                 <FormLabel>Professor</FormLabel>
                 <Input 
-                  value={user?.email || ""}
+                  value={userName}
                   disabled
                   className="bg-muted"
                 />
@@ -183,13 +186,13 @@ const OccurrenceForm = () => {
               <div className="flex flex-col space-y-4">
                 <FormField
                   control={form.control}
-                  name="codigo_aluno"
+                  name="nome_aluno"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Código do Aluno</FormLabel>
+                      <FormLabel>Nome do Aluno</FormLabel>
                       <div className="flex space-x-2">
                         <FormControl>
-                          <Input placeholder="Digite o código do aluno" {...field} />
+                          <Input placeholder="Digite o nome do aluno" {...field} />
                         </FormControl>
                         <Button 
                           type="button" 
@@ -210,6 +213,7 @@ const OccurrenceForm = () => {
                     <h3 className="font-medium text-cz-green">Aluno Encontrado:</h3>
                     <div className="mt-2">
                       <p><strong>Nome:</strong> {student.nome}</p>
+                      <p><strong>Curso:</strong> {student.curso}</p>
                       <p><strong>Turma:</strong> {student.turma_id}</p>
                     </div>
                   </Card>

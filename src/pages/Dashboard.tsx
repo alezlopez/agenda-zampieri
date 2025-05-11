@@ -27,13 +27,13 @@ const Dashboard = () => {
           <div className="flex items-center gap-4">
             <ProfileDialog 
               trigger={
-                <Button variant="outline" className="text-white border-white hover:bg-white/10 gap-2">
+                <Button variant="ghost" className="text-white hover:bg-white/10 gap-2">
                   <User size={16} />
                   <span className="hidden md:inline">{userName}</span>
                 </Button>
               } 
             />
-            <Button variant="outline" className="text-white border-white hover:bg-white/10" onClick={logout}>
+            <Button variant="ghost" className="text-white hover:bg-white/10" onClick={logout}>
               Sair
             </Button>
           </div>

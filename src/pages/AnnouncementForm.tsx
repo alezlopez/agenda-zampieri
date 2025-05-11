@@ -37,6 +37,8 @@ const AnnouncementForm = () => {
   const navigate = useNavigate();
   const [classes, setClasses] = useState<Class[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  const userName = user?.user_metadata?.name || user?.email;
 
   const form = useForm<AnnouncementFormValues>({
     resolver: zodResolver(announcementSchema),
@@ -111,10 +113,10 @@ const AnnouncementForm = () => {
             <h1 className="text-xl font-bold">Avisos e Comunicados</h1>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="outline" className="border-cz-green text-cz-green hover:bg-cz-green/10" onClick={() => navigate("/dashboard")}>
+            <Button variant="ghost" className="text-cz-green hover:bg-cz-green/10" onClick={() => navigate("/dashboard")}>
               Voltar
             </Button>
-            <Button variant="outline" className="border-cz-green text-cz-green hover:bg-cz-green/10" onClick={logout}>
+            <Button variant="ghost" className="text-cz-green hover:bg-cz-green/10" onClick={logout}>
               Sair
             </Button>
           </div>
@@ -184,7 +186,7 @@ const AnnouncementForm = () => {
               <div className="form-field">
                 <FormLabel>Enviado por</FormLabel>
                 <Input 
-                  value={user?.email || ""}
+                  value={userName}
                   disabled
                   className="bg-muted"
                 />

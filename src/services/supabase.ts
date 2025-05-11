@@ -67,51 +67,51 @@ export async function updateUserPassword(password: string) {
   }
 }
 
-export async function getDisciplines(): Promise<Discipline[]> {
+export const getDisciplines = async () => {
   try {
     const { data, error } = await supabase
-      .from("disciplinas_alunos")
-      .select("*");
-
-    if (error) {
-      toast.error(`Erro ao carregar disciplinas: ${error.message}`);
-      return [];
-    }
-
-    // Transform data to match the Discipline interface
-    return data.map(item => ({
-      id: String(item.id),
-      nome: item.disciplina
-    })) || [];
+      .from('disciplinas')
+      .select('*')
+      .order('nome');
+      
+    if (error) throw error;
+    return data || [];
   } catch (error) {
-    console.error("Error fetching disciplines:", error);
-    toast.error("Erro ao carregar disciplinas");
+    console.error('Error getting disciplines:', error);
     return [];
   }
-}
+};
 
-export async function getClasses(): Promise<Class[]> {
+export const getClasses = async () => {
   try {
     const { data, error } = await supabase
-      .from("turmas_alunos")
-      .select("*");
-
-    if (error) {
-      toast.error(`Erro ao carregar turmas: ${error.message}`);
-      return [];
-    }
-
-    // Transform data to match the Class interface
-    return data.map(item => ({
-      id: String(item.Código),
-      nome: item.Turma || ""
-    })) || [];
+      .from('turmas')
+      .select('*')
+      .order('nome');
+      
+    if (error) throw error;
+    return data || [];
   } catch (error) {
-    console.error("Error fetching classes:", error);
-    toast.error("Erro ao carregar turmas");
+    console.error('Error getting classes:', error);
     return [];
   }
-}
+};
+
+export const findStudentByName = async (name: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('relacao_alunos')
+      .select('*')
+      .ilike('nome', `%${name}%`)
+      .limit(1);
+      
+    if (error) throw error;
+    return data?.[0] || null;
+  } catch (error) {
+    console.error('Error finding student:', error);
+    return null;
+  }
+};
 
 export async function getStudents(): Promise<Student[]> {
   try {
