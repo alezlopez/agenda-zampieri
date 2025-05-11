@@ -9,6 +9,21 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      disciplinas_alunos: {
+        Row: {
+          disciplina: string
+          id: number
+        }
+        Insert: {
+          disciplina: string
+          id?: number
+        }
+        Update: {
+          disciplina?: string
+          id?: number
+        }
+        Relationships: []
+      }
       financeiro: {
         Row: {
           created_at: string
@@ -300,25 +315,16 @@ export type Database = {
       }
       turmas_alunos: {
         Row: {
-          "Código do Aluno": number
-          "Curso do Aluno": string | null
-          "Nome do Aluno": string | null
-          "Nome Responsável": string | null
-          "WhatsApp Responsavel": number | null
+          Código: number
+          Turma: string | null
         }
         Insert: {
-          "Código do Aluno": number
-          "Curso do Aluno"?: string | null
-          "Nome do Aluno"?: string | null
-          "Nome Responsável"?: string | null
-          "WhatsApp Responsavel"?: number | null
+          Código: number
+          Turma?: string | null
         }
         Update: {
-          "Código do Aluno"?: number
-          "Curso do Aluno"?: string | null
-          "Nome do Aluno"?: string | null
-          "Nome Responsável"?: string | null
-          "WhatsApp Responsavel"?: number | null
+          Código?: number
+          Turma?: string | null
         }
         Relationships: []
       }

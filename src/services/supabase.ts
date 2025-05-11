@@ -43,21 +43,26 @@ export async function getSession() {
 
 export async function getDisciplines(): Promise<Discipline[]> {
   try {
+    // Fetching from disciplinas_alunos table and mapping to expected format
     const { data, error } = await supabase
       .from("disciplinas_alunos")
       .select("*");
 
     if (error) {
-      toast(`Erro ao carregar disciplinas: ${error.message}`, {
+      toast.error(`Erro ao carregar disciplinas: ${error.message}`, {
         description: "Por favor, tente novamente.",
       });
       return [];
     }
 
-    return data || [];
+    // Transform data to match the Discipline interface
+    return data.map(item => ({
+      id: String(item.id),
+      nome: item.disciplina
+    })) || [];
   } catch (error) {
     console.error("Error fetching disciplines:", error);
-    toast("Erro ao carregar disciplinas", {
+    toast.error("Erro ao carregar disciplinas", {
       description: "Por favor, tente novamente.",
     });
     return [];
@@ -71,16 +76,20 @@ export async function getClasses(): Promise<Class[]> {
       .select("*");
 
     if (error) {
-      toast(`Erro ao carregar turmas: ${error.message}`, {
+      toast.error(`Erro ao carregar turmas: ${error.message}`, {
         description: "Por favor, tente novamente.",
       });
       return [];
     }
 
-    return data || [];
+    // Transform data to match the Class interface
+    return data.map(item => ({
+      id: String(item.Código),
+      nome: item.Turma || ""
+    })) || [];
   } catch (error) {
     console.error("Error fetching classes:", error);
-    toast("Erro ao carregar turmas", {
+    toast.error("Erro ao carregar turmas", {
       description: "Por favor, tente novamente.",
     });
     return [];
@@ -94,16 +103,22 @@ export async function getStudents(): Promise<Student[]> {
       .select("*");
 
     if (error) {
-      toast(`Erro ao carregar alunos: ${error.message}`, {
+      toast.error(`Erro ao carregar alunos: ${error.message}`, {
         description: "Por favor, tente novamente.",
       });
       return [];
     }
 
-    return data || [];
+    // Transform data to match the Student interface
+    return data.map(item => ({
+      id: String(item["Código do Aluno"]),
+      codigo: String(item["Código do Aluno"]),
+      nome: item["Nome do Aluno"] || "",
+      turma_id: ""  // This field isn't directly available in the data
+    })) || [];
   } catch (error) {
     console.error("Error fetching students:", error);
-    toast("Erro ao carregar alunos", {
+    toast.error("Erro ao carregar alunos", {
       description: "Por favor, tente novamente.",
     });
     return [];
@@ -115,19 +130,27 @@ export async function findStudentByCode(code: string): Promise<Student | null> {
     const { data, error } = await supabase
       .from("relacao_alunos")
       .select("*")
-      .eq("codigo", code)
+      .eq("Código do Aluno", code)
       .single();
 
     if (error) {
       if (error.code !== "PGRST116") { // Not Found error
-        toast(`Erro ao buscar aluno: ${error.message}`, {
+        toast.error(`Erro ao buscar aluno: ${error.message}`, {
           description: "Por favor, tente novamente.",
         });
       }
       return null;
     }
 
-    return data;
+    if (!data) return null;
+
+    // Transform data to match the Student interface
+    return {
+      id: String(data["Código do Aluno"]),
+      codigo: String(data["Código do Aluno"]),
+      nome: data["Nome do Aluno"] || "",
+      turma_id: ""  // This field isn't directly available in the data
+    };
   } catch (error) {
     console.error("Error finding student:", error);
     return null;
