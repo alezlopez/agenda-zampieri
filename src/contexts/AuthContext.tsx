@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { getSession, signIn, signOut } from "../services/supabase";
+import { getSession, signIn, signOut, updateUserProfile, updateUserPassword } from "../services/supabase";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -9,6 +9,8 @@ type AuthContextType = {
   loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  updateProfile: (name: string) => Promise<boolean>;
+  updatePassword: (password: string) => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -71,8 +73,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateProfile = async (name: string) => {
+    try {
+      setLoading(true);
+      const { data, error } = await updateUserProfile(name);
+
+      if (error) {
+        toast.error("Erro ao atualizar perfil", {
+          description: error,
+        });
+        return false;
+      }
+
+      setUser(data?.user || user);
+      toast.success("Perfil atualizado com sucesso!");
+      return true;
+    } catch (error) {
+      console.error("Profile update error:", error);
+      toast.error("Erro ao atualizar perfil", {
+        description: "Ocorreu um erro ao tentar atualizar seu perfil.",
+      });
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updatePassword = async (password: string) => {
+    try {
+      setLoading(true);
+      const { error } = await updateUserPassword(password);
+
+      if (error) {
+        toast.error("Erro ao atualizar senha", {
+          description: error,
+        });
+        return false;
+      }
+
+      toast.success("Senha atualizada com sucesso!");
+      return true;
+    } catch (error) {
+      console.error("Password update error:", error);
+      toast.error("Erro ao atualizar senha", {
+        description: "Ocorreu um erro ao tentar atualizar sua senha.",
+      });
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, updateProfile, updatePassword }}>
       {children}
     </AuthContext.Provider>
   );

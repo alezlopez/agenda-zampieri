@@ -1,4 +1,3 @@
-
 import { Discipline, Class, Student } from "../types";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,6 +35,34 @@ export async function getSession() {
     return { data, error: null };
   } catch (error: any) {
     console.error("Error getting session:", error);
+    return { data: null, error: error.message };
+  }
+}
+
+export async function updateUserProfile(name: string) {
+  try {
+    const { data, error } = await supabase.auth.updateUser({
+      data: { name }
+    });
+
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error: any) {
+    console.error("Error updating user profile:", error);
+    return { data: null, error: error.message };
+  }
+}
+
+export async function updateUserPassword(password: string) {
+  try {
+    const { data, error } = await supabase.auth.updateUser({
+      password
+    });
+
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error: any) {
+    console.error("Error updating user password:", error);
     return { data: null, error: error.message };
   }
 }

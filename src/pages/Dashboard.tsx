@@ -3,11 +3,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { PenLine, AlertCircle, Bell } from "lucide-react";
+import { PenLine, AlertCircle, Bell, User } from "lucide-react";
+import ProfileDialog from "@/components/ProfileDialog";
 
 const Dashboard = () => {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
+  
+  const userName = user?.user_metadata?.name || user?.email;
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -22,7 +25,14 @@ const Dashboard = () => {
             <h1 className="text-xl font-bold">Sistema de Formulários</h1>
           </div>
           <div className="flex items-center gap-4">
-            <span className="hidden md:inline">Olá, {user?.email}</span>
+            <ProfileDialog 
+              trigger={
+                <Button variant="outline" className="text-white border-white hover:bg-white/10 gap-2">
+                  <User size={16} />
+                  <span className="hidden md:inline">{userName}</span>
+                </Button>
+              } 
+            />
             <Button variant="outline" className="text-white border-white hover:bg-white/10" onClick={logout}>
               Sair
             </Button>
