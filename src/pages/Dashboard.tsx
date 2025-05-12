@@ -44,8 +44,9 @@ const Dashboard = () => {
         <h2 className="text-2xl font-bold mb-6 text-cz-green">Selecione uma opção</h2>
         
         <div className="grid md:grid-cols-3 gap-6">
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="bg-cz-green/10">
+          {/* Card 1: Lançamento de Conteúdo */}
+          <Card className="hover:shadow-lg transition-shadow flex flex-col h-full">
+            <CardHeader className="bg-cz-green/10 flex-none">
               <CardTitle className="flex items-center gap-2 text-cz-green">
                 <PenLine /> Lançamento de Conteúdo
               </CardTitle>
@@ -53,12 +54,12 @@ const Dashboard = () => {
                 Registre tarefas e lições de casa
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
-              <p className="text-sm mb-4">
+            <CardContent className="pt-6 flex-grow flex flex-col">
+              <p className="text-sm mb-6 flex-grow">
                 Registre tarefas, lições de casa e conteúdos para uma disciplina e turma específica.
               </p>
               <Button 
-                className="w-full bg-cz-green hover:bg-cz-green/90" 
+                className="w-full bg-cz-green hover:bg-cz-green/90 mt-auto" 
                 onClick={() => navigate("/content")}
               >
                 Acessar
@@ -66,8 +67,9 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="bg-cz-red/10">
+          {/* Card 2: Ocorrência Individual */}
+          <Card className="hover:shadow-lg transition-shadow flex flex-col h-full">
+            <CardHeader className="bg-cz-red/10 flex-none">
               <CardTitle className="flex items-center gap-2 text-cz-red">
                 <AlertCircle /> Ocorrência Individual
               </CardTitle>
@@ -75,12 +77,12 @@ const Dashboard = () => {
                 Registre ocorrências para alunos específicos
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
-              <p className="text-sm mb-4">
+            <CardContent className="pt-6 flex-grow flex flex-col">
+              <p className="text-sm mb-6 flex-grow">
                 Registre ocorrências individuais como advertências, atrasos, desempenho, etc.
               </p>
               <Button 
-                className="w-full bg-cz-red hover:bg-cz-red/90" 
+                className="w-full bg-cz-red hover:bg-cz-red/90 mt-auto" 
                 onClick={() => navigate("/occurrence")}
               >
                 Acessar
@@ -88,8 +90,9 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="bg-cz-gold/10">
+          {/* Card 3: Avisos e Comunicados */}
+          <Card className="hover:shadow-lg transition-shadow flex flex-col h-full">
+            <CardHeader className="bg-cz-gold/10 flex-none">
               <CardTitle className="flex items-center gap-2 text-cz-gold">
                 <Bell /> Avisos e Comunicados
               </CardTitle>
@@ -97,12 +100,12 @@ const Dashboard = () => {
                 Envie avisos para turmas ou para toda a escola
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
-              <p className="text-sm mb-4">
+            <CardContent className="pt-6 flex-grow flex flex-col">
+              <p className="text-sm mb-6 flex-grow">
                 Envie comunicados importantes para uma turma específica ou para todas as turmas.
               </p>
               <Button 
-                className="w-full bg-cz-gold hover:bg-cz-gold/90 text-cz-green" 
+                className="w-full bg-cz-gold hover:bg-cz-gold/90 text-cz-green mt-auto" 
                 onClick={() => navigate("/announcement")}
               >
                 Acessar
