@@ -20,7 +20,7 @@ export interface Student {
   codigo: string;
   nome: string;
   turma_id: string;
-  curso?: string;
+  curso: string;
 }
 
 export const OccurrenceTypes = [

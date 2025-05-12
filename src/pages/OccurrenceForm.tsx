@@ -87,7 +87,7 @@ const OccurrenceForm = () => {
         ...values,
         professor: userName,
         aluno: student.nome,
-        turma: student.turma_id,
+        curso: student.curso, // Send curso instead of turma
         timestamp: new Date().toISOString(),
       };
       
@@ -214,7 +214,6 @@ const OccurrenceForm = () => {
                     <div className="mt-2">
                       <p><strong>Nome:</strong> {student.nome}</p>
                       <p><strong>Curso:</strong> {student.curso}</p>
-                      <p><strong>Turma:</strong> {student.turma_id}</p>
                     </div>
                   </Card>
                 )}
