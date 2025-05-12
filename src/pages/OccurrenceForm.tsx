@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -13,7 +12,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import { Discipline, Student, OccurrenceTypes } from "@/types";
 import { toast } from "sonner";
-import { getDisciplines, findStudentByName } from "@/services/supabase";
+import { getDisciplines, findStudentByName, getStudents } from "@/services/supabase";
+import { Search, Loader2, CheckCircle2 } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const occurrenceSchema = z.object({
   disciplina: z.string().min(1, "Selecione uma disciplina"),
@@ -29,7 +38,9 @@ const OccurrenceForm = () => {
   const navigate = useNavigate();
   const [disciplines, setDisciplines] = useState<Discipline[]>([]);
   const [student, setStudent] = useState<Student | null>(null);
-  const [searchingStudent, setSearchingStudent] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Student[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const userName = user?.user_metadata?.name || user?.email;
@@ -53,21 +64,52 @@ const OccurrenceForm = () => {
     loadDisciplines();
   }, []);
 
-  const handleFindStudent = async (name: string) => {
-    if (!name) return;
-    
-    setSearchingStudent(true);
-    const foundStudent = await findStudentByName(name);
-    setSearchingStudent(false);
-    
-    if (foundStudent) {
-      setStudent(foundStudent);
-    } else {
-      setStudent(null);
-      toast.error("Aluno não encontrado", {
-        description: "Nenhum aluno encontrado com este nome."
-      });
-    }
+  useEffect(() => {
+    const searchStudents = async () => {
+      if (searchQuery.length < 2) {
+        setSearchResults([]);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const allStudents = await getStudents();
+        
+        // Filter students based on the search query
+        const filteredStudents = allStudents
+          .filter(s => s.nome.toLowerCase().includes(searchQuery.toLowerCase()))
+          .sort((a, b) => {
+            // Sort by relevance - if name starts with search query, it should come first
+            const aStartsWithQuery = a.nome.toLowerCase().startsWith(searchQuery.toLowerCase());
+            const bStartsWithQuery = b.nome.toLowerCase().startsWith(searchQuery.toLowerCase());
+            
+            if (aStartsWithQuery && !bStartsWithQuery) return -1;
+            if (!aStartsWithQuery && bStartsWithQuery) return 1;
+            
+            // Then sort alphabetically
+            return a.nome.localeCompare(b.nome);
+          })
+          .slice(0, 10); // Limit to 10 results
+        
+        setSearchResults(filteredStudents);
+      } catch (error) {
+        console.error("Error searching students:", error);
+        toast.error("Erro ao buscar alunos", {
+          description: "Ocorreu um erro ao buscar os alunos. Tente novamente."
+        });
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const debounce = setTimeout(searchStudents, 300);
+    return () => clearTimeout(debounce);
+  }, [searchQuery]);
+
+  const handleSelectStudent = (selectedStudent: Student) => {
+    setStudent(selectedStudent);
+    form.setValue("nome_aluno", selectedStudent.nome);
+    setSearchQuery("");
   };
 
   const onSubmit = async (values: OccurrenceFormValues) => {
@@ -87,7 +129,7 @@ const OccurrenceForm = () => {
         ...values,
         professor: userName,
         aluno: student.nome,
-        curso: student.curso, // Send curso instead of turma
+        curso: student.curso, 
         timestamp: new Date().toISOString(),
       };
       
@@ -188,21 +230,77 @@ const OccurrenceForm = () => {
                   control={form.control}
                   name="nome_aluno"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="flex flex-col space-y-2">
                       <FormLabel>Nome do Aluno</FormLabel>
-                      <div className="flex space-x-2">
+                      <div className="relative">
                         <FormControl>
-                          <Input placeholder="Digite o nome do aluno" {...field} />
+                          <div className="relative">
+                            <div className="flex items-center absolute inset-y-0 left-0 pl-3 pointer-events-none">
+                              <Search className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            <Input 
+                              placeholder="Digite o nome do aluno" 
+                              className="pl-9"
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              {...field}
+                              onFocus={() => {
+                                if (searchQuery.length >= 2) {
+                                  // Keep the dropdown open on focus if there's already a search query
+                                } else {
+                                  setSearchResults([]);
+                                }
+                              }}
+                            />
+                          </div>
                         </FormControl>
-                        <Button 
-                          type="button" 
-                          onClick={() => handleFindStudent(field.value)}
-                          disabled={searchingStudent || !field.value}
-                          className="bg-cz-green hover:bg-cz-green/90"
-                        >
-                          {searchingStudent ? "Buscando..." : "Buscar"}
-                        </Button>
                       </div>
+                      
+                      {searchQuery.length >= 2 && (
+                        <div className="relative mt-1 z-10">
+                          <Command className="rounded-lg border shadow-md">
+                            <CommandList>
+                              {isSearching ? (
+                                <div className="p-2">
+                                  <Skeleton className="h-8 w-full mb-2" />
+                                  <Skeleton className="h-8 w-full mb-2" />
+                                  <Skeleton className="h-8 w-full" />
+                                </div>
+                              ) : (
+                                <>
+                                  {searchResults.length === 0 ? (
+                                    <CommandEmpty className="py-6 text-center text-sm">
+                                      Nenhum aluno encontrado.
+                                    </CommandEmpty>
+                                  ) : (
+                                    <CommandGroup heading="Alunos">
+                                      {searchResults.map((s) => (
+                                        <CommandItem
+                                          key={s.id}
+                                          value={s.nome}
+                                          onSelect={() => handleSelectStudent(s)}
+                                          className="flex items-center justify-between cursor-pointer hover:bg-muted"
+                                        >
+                                          <div>
+                                            <span className="font-medium">{s.nome}</span>
+                                            <span className="text-sm text-muted-foreground ml-2">
+                                              {s.curso || "Série não disponível"}
+                                            </span>
+                                          </div>
+                                          {student && student.id === s.id && (
+                                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                          )}
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  )}
+                                </>
+                              )}
+                            </CommandList>
+                          </Command>
+                        </div>
+                      )}
+                      
                       <FormMessage />
                     </FormItem>
                   )}
@@ -210,10 +308,10 @@ const OccurrenceForm = () => {
 
                 {student && (
                   <Card className="p-4 bg-muted/50 border-cz-green">
-                    <h3 className="font-medium text-cz-green">Aluno Encontrado:</h3>
+                    <h3 className="font-medium text-cz-green">Aluno Selecionado:</h3>
                     <div className="mt-2">
                       <p><strong>Nome:</strong> {student.nome}</p>
-                      <p><strong>Curso:</strong> {student.curso}</p>
+                      <p><strong>Curso:</strong> {student.curso || "Não disponível"}</p>
                     </div>
                   </Card>
                 )}
@@ -275,7 +373,12 @@ const OccurrenceForm = () => {
                   className="bg-cz-red hover:bg-cz-red/90 text-white"
                   disabled={isLoading || !student}
                 >
-                  {isLoading ? "Enviando..." : "Enviar"}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : "Enviar"}
                 </Button>
               </div>
             </form>
