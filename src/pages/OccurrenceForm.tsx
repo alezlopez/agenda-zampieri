@@ -132,7 +132,7 @@ const OccurrenceForm = () => {
     setIsLoading(true);
     
     try {
-      const webhookUrl = "https://n8n.colegiozampieri.com/webhook/agendadigital1";
+      const webhookUrl = "https://n8n.colegiozampieri.com/webhook/agendadigital2";
       
       const payload = {
         ...values,
