@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -12,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import { Discipline, Student, OccurrenceTypes } from "@/types";
 import { toast } from "sonner";
-import { getDisciplines, findStudentByName, getStudents } from "@/services/supabase";
+import { getDisciplines, getStudents } from "@/services/supabase";
 import { Search, Loader2, CheckCircle2 } from "lucide-react";
 import {
   Command,
@@ -42,6 +43,7 @@ const OccurrenceForm = () => {
   const [searchResults, setSearchResults] = useState<Student[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const userName = user?.user_metadata?.name || user?.email;
 
@@ -68,12 +70,16 @@ const OccurrenceForm = () => {
     const searchStudents = async () => {
       if (searchQuery.length < 2) {
         setSearchResults([]);
+        setDropdownOpen(false);
         return;
       }
 
       setIsSearching(true);
+      setDropdownOpen(true);
+      
       try {
         const allStudents = await getStudents();
+        console.log("All students fetched:", allStudents);
         
         // Filter students based on the search query
         const filteredStudents = allStudents
@@ -91,6 +97,7 @@ const OccurrenceForm = () => {
           })
           .slice(0, 10); // Limit to 10 results
         
+        console.log("Filtered students:", filteredStudents);
         setSearchResults(filteredStudents);
       } catch (error) {
         console.error("Error searching students:", error);
@@ -107,9 +114,11 @@ const OccurrenceForm = () => {
   }, [searchQuery]);
 
   const handleSelectStudent = (selectedStudent: Student) => {
+    console.log("Selected student:", selectedStudent);
     setStudent(selectedStudent);
     form.setValue("nome_aluno", selectedStudent.nome);
     setSearchQuery("");
+    setDropdownOpen(false);
   };
 
   const onSubmit = async (values: OccurrenceFormValues) => {
@@ -132,6 +141,8 @@ const OccurrenceForm = () => {
         curso: student.curso, 
         timestamp: new Date().toISOString(),
       };
+      
+      console.log("Sending payload:", payload);
       
       const response = await fetch(webhookUrl, {
         method: "POST",
@@ -203,7 +214,7 @@ const OccurrenceForm = () => {
                           <SelectValue placeholder="Selecione uma disciplina" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="z-50 bg-white">
                         {disciplines.map((discipline) => (
                           <SelectItem key={discipline.id} value={discipline.nome}>
                             {discipline.nome}
@@ -242,24 +253,28 @@ const OccurrenceForm = () => {
                               placeholder="Digite o nome do aluno" 
                               className="pl-9"
                               value={searchQuery}
-                              onChange={(e) => setSearchQuery(e.target.value)}
-                              {...field}
+                              onChange={(e) => {
+                                setSearchQuery(e.target.value);
+                                field.onChange(e.target.value);
+                              }}
                               onFocus={() => {
                                 if (searchQuery.length >= 2) {
-                                  // Keep the dropdown open on focus if there's already a search query
-                                } else {
-                                  setSearchResults([]);
+                                  setDropdownOpen(true);
                                 }
+                              }}
+                              onBlur={() => {
+                                // Delay hiding the dropdown to allow for clicking on items
+                                setTimeout(() => setDropdownOpen(false), 200);
                               }}
                             />
                           </div>
                         </FormControl>
                       </div>
                       
-                      {searchQuery.length >= 2 && (
-                        <div className="relative mt-1 z-10">
+                      {dropdownOpen && searchQuery.length >= 2 && (
+                        <div className="relative mt-1 z-50">
                           <Command className="rounded-lg border shadow-md">
-                            <CommandList>
+                            <CommandList className="max-h-[300px] overflow-y-auto">
                               {isSearching ? (
                                 <div className="p-2">
                                   <Skeleton className="h-8 w-full mb-2" />
@@ -279,7 +294,7 @@ const OccurrenceForm = () => {
                                           key={s.id}
                                           value={s.nome}
                                           onSelect={() => handleSelectStudent(s)}
-                                          className="flex items-center justify-between cursor-pointer hover:bg-muted"
+                                          className="flex items-center justify-between cursor-pointer hover:bg-muted p-2"
                                         >
                                           <div>
                                             <span className="font-medium">{s.nome}</span>
@@ -329,7 +344,7 @@ const OccurrenceForm = () => {
                           <SelectValue placeholder="Selecione o tipo de ocorrência" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="z-50 bg-white">
                         {OccurrenceTypes.map((type) => (
                           <SelectItem key={type} value={type}>
                             {type}
