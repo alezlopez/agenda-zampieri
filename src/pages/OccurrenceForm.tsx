@@ -117,16 +117,16 @@ const OccurrenceForm = () => {
     console.log("Selected student:", selectedStudent);
     setStudent(selectedStudent);
     
-    // Corrigido: Garantindo que o nome do aluno no formulário seja atualizado
+    // Update the student name in the form
     form.setValue("nome_aluno", selectedStudent.nome);
     
-    // Fechar o dropdown após a seleção
+    // Close the dropdown after selection
     setSearchQuery(selectedStudent.nome);
     setDropdownOpen(false);
   };
 
   const onSubmit = async (values: OccurrenceFormValues) => {
-    // Corrigido: Validação para garantir que um aluno foi selecionado
+    // Validate that a student is selected
     if (!student || !student.id) {
       toast.error("Aluno não encontrado", {
         description: "Por favor, busque e selecione um aluno válido antes de enviar."
@@ -137,42 +137,39 @@ const OccurrenceForm = () => {
     setIsLoading(true);
     
     try {
-      const webhookUrl = "https://n8n.colegiozampieri.com/webhook/agendaOcorrencias";
-      
-      const payload = {
-        ...values,
-        professor: userName,
-        aluno: student.nome,
-        curso: student.curso, 
-        timestamp: new Date().toISOString(),
-      };
-      
-      console.log("Sending payload:", payload);
-      
-      const response = await fetch(webhookUrl, {
+      // Using fetch API directly instead of axios for better error handling in this environment
+      const response = await fetch("https://n8n.colegiozampieri.com/webhook/agendaOcorrencias", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          disciplina: values.disciplina,
+          professor: userName,
+          aluno: student.nome,
+          curso: student.curso,
+          tipo_ocorrencia: values.tipo_ocorrencia,
+          descricao: values.descricao,
+          timestamp: new Date().toISOString(),
+        }),
       });
       
       if (!response.ok) {
-        throw new Error("Erro ao enviar o formulário");
+        throw new Error(`Error: ${response.status} - ${response.statusText}`);
       }
       
-      toast("Ocorrência registrada", {
+      toast.success("Ocorrência registrada", {
         description: "A ocorrência foi registrada com sucesso."
       });
       
-      // Limpar o formulário e o aluno selecionado
+      // Reset form and student selection
       setStudent(null);
       setSearchQuery("");
       form.reset();
     } catch (error) {
       console.error("Erro ao enviar formulário:", error);
       toast.error("Erro ao enviar", {
-        description: "Ocorreu um erro ao enviar o formulário. Tente novamente."
+        description: "Ocorreu um erro ao enviar o formulário. Tente novamente. Se o problema persistir, entre em contato com o suporte."
       });
     } finally {
       setIsLoading(false);
@@ -264,12 +261,12 @@ const OccurrenceForm = () => {
                                 const value = e.target.value;
                                 setSearchQuery(value);
                                 
-                                // Apenas atualizar o valor do campo se não tiver um aluno já selecionado
+                                // Only update the form field if there's no student selected
                                 if (!student) {
                                   field.onChange(value);
                                 }
                                 
-                                // Se limpar a busca, também limpar o aluno selecionado
+                                // If search is cleared, also clear the selected student
                                 if (value === "") {
                                   setStudent(null);
                                   field.onChange("");
