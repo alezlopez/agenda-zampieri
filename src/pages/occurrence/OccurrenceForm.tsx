@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Student } from "@/types";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -28,6 +28,7 @@ const OccurrenceForm = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [networkError, setNetworkError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   const userName = user?.user_metadata?.name || user?.email;
 
@@ -49,6 +50,37 @@ const OccurrenceForm = () => {
       form.setValue("nome_aluno", selectedStudent.nome);
     } else if (query === "") {
       form.setValue("nome_aluno", "");
+    }
+  };
+
+  const sendOccurrenceData = async (payload: any, maxRetries: number = 2): Promise<Response> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15-second timeout
+    
+    try {
+      const response = await fetch("https://n8n.colegiozampieri.com/webhook/agendaOcorrencias", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      
+      // If we have retries left and it's a network error, retry
+      if (maxRetries > 0 && error instanceof TypeError && error.message === "Failed to fetch") {
+        console.log(`Retry attempt ${3 - maxRetries} for occurrence submission`);
+        // Wait 1.5 seconds before retrying
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        return sendOccurrenceData(payload, maxRetries - 1);
+      }
+      
+      throw error;
     }
   };
 
@@ -78,20 +110,8 @@ const OccurrenceForm = () => {
       
       console.log("Sending payload:", payload);
       
-      // Using fetch API with improved timeout handling
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-      
-      const response = await fetch("https://n8n.colegiozampieri.com/webhook/agendaOcorrencias", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
+      // Using improved fetch with retries
+      const response = await sendOccurrenceData(payload);
       
       if (!response.ok) {
         throw new Error(`Error: ${response.status} - ${response.statusText}`);
@@ -130,6 +150,12 @@ const OccurrenceForm = () => {
     }
   };
 
+  const handleRetry = () => {
+    setNetworkError(false);
+    setRetryCount(prev => prev + 1);
+    form.handleSubmit(onSubmit)();
+  };
+
   return (
     <div className="min-h-screen bg-muted/30">
       <Header userName={userName} navigate={navigate} logout={logout} />
@@ -142,13 +168,24 @@ const OccurrenceForm = () => {
             <Alert variant="destructive" className="mb-6">
               <AlertTitle>Problema de conexão detectado</AlertTitle>
               <AlertDescription>
-                Não foi possível conectar ao servidor. Isso pode ocorrer devido a:
-                <ul className="list-disc ml-5 mt-2">
-                  <li>Problemas na sua conexão com a internet</li>
-                  <li>O servidor pode estar temporariamente indisponível</li>
-                  <li>Bloqueio de firewall ou proxy na rede</li>
-                </ul>
-                Por favor, verifique sua conexão e tente novamente.
+                <div className="space-y-2">
+                  <p>Não foi possível conectar ao servidor. Isso pode ocorrer devido a:</p>
+                  <ul className="list-disc ml-5">
+                    <li>Problemas na sua conexão com a internet</li>
+                    <li>O servidor pode estar temporariamente indisponível</li>
+                    <li>Bloqueio de firewall ou proxy na rede</li>
+                  </ul>
+                  <div className="flex justify-end mt-3">
+                    <Button 
+                      variant="outline" 
+                      onClick={handleRetry} 
+                      className="flex items-center"
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Tentar Novamente
+                    </Button>
+                  </div>
+                </div>
               </AlertDescription>
             </Alert>
           )}
