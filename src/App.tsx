@@ -10,7 +10,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ContentForm from "./pages/ContentForm";
-import OccurrenceForm from "./pages/OccurrenceForm";
+import OccurrenceForm from "./pages/occurrence"; // Updated import path
 import AnnouncementForm from "./pages/AnnouncementForm";
 import NotFound from "./pages/NotFound";
 
