@@ -24,6 +24,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 const occurrenceSchema = z.object({
   disciplina: z.string().min(1, "Selecione uma disciplina"),
@@ -44,6 +45,7 @@ const OccurrenceForm = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [networkError, setNetworkError] = useState(false);
 
   const userName = user?.user_metadata?.name || user?.email;
 
@@ -135,29 +137,42 @@ const OccurrenceForm = () => {
     }
     
     setIsLoading(true);
+    setNetworkError(false);
     
     try {
-      // Using fetch API directly instead of axios for better error handling in this environment
+      // Creating the payload
+      const payload = {
+        disciplina: values.disciplina,
+        professor: userName,
+        aluno: student.nome,
+        curso: student.curso,
+        tipo_ocorrencia: values.tipo_ocorrencia,
+        descricao: values.descricao,
+        timestamp: new Date().toISOString(),
+      };
+      
+      console.log("Sending payload:", payload);
+      
+      // Using fetch API with improved timeout handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       const response = await fetch("https://n8n.colegiozampieri.com/webhook/agendaOcorrencias", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          disciplina: values.disciplina,
-          professor: userName,
-          aluno: student.nome,
-          curso: student.curso,
-          tipo_ocorrencia: values.tipo_ocorrencia,
-          descricao: values.descricao,
-          timestamp: new Date().toISOString(),
-        }),
+        body: JSON.stringify(payload),
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         throw new Error(`Error: ${response.status} - ${response.statusText}`);
       }
       
+      // Success handling
       toast.success("Ocorrência registrada", {
         description: "A ocorrência foi registrada com sucesso."
       });
@@ -166,11 +181,25 @@ const OccurrenceForm = () => {
       setStudent(null);
       setSearchQuery("");
       form.reset();
+      
     } catch (error) {
       console.error("Erro ao enviar formulário:", error);
-      toast.error("Erro ao enviar", {
-        description: "Ocorreu um erro ao enviar o formulário. Tente novamente. Se o problema persistir, entre em contato com o suporte."
-      });
+      
+      // Better error handling with specific messages
+      if (error instanceof TypeError && error.message === "Failed to fetch") {
+        setNetworkError(true);
+        toast.error("Erro de conexão", {
+          description: "Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente."
+        });
+      } else if (error instanceof DOMException && error.name === "AbortError") {
+        toast.error("Tempo limite excedido", {
+          description: "A solicitação demorou muito para responder. Verifique sua conexão e tente novamente."
+        });
+      } else {
+        toast.error("Erro ao enviar", {
+          description: "Ocorreu um erro ao enviar o formulário. Tente novamente em alguns instantes."
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -203,6 +232,21 @@ const OccurrenceForm = () => {
       <main className="container mx-auto py-8 px-4">
         <div className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-2xl font-bold mb-6 text-cz-red">Registrar Ocorrência Individual</h2>
+          
+          {networkError && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertTitle>Problema de conexão detectado</AlertTitle>
+              <AlertDescription>
+                Não foi possível conectar ao servidor. Isso pode ocorrer devido a:
+                <ul className="list-disc ml-5 mt-2">
+                  <li>Problemas na sua conexão com a internet</li>
+                  <li>O servidor pode estar temporariamente indisponível</li>
+                  <li>Bloqueio de firewall ou proxy na rede</li>
+                </ul>
+                Por favor, verifique sua conexão e tente novamente.
+              </AlertDescription>
+            </Alert>
+          )}
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
