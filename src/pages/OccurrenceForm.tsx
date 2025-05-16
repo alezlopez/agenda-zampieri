@@ -116,15 +116,20 @@ const OccurrenceForm = () => {
   const handleSelectStudent = (selectedStudent: Student) => {
     console.log("Selected student:", selectedStudent);
     setStudent(selectedStudent);
+    
+    // Corrigido: Garantindo que o nome do aluno no formulário seja atualizado
     form.setValue("nome_aluno", selectedStudent.nome);
-    setSearchQuery("");
+    
+    // Fechar o dropdown após a seleção
+    setSearchQuery(selectedStudent.nome);
     setDropdownOpen(false);
   };
 
   const onSubmit = async (values: OccurrenceFormValues) => {
-    if (!student) {
+    // Corrigido: Validação para garantir que um aluno foi selecionado
+    if (!student || !student.id) {
       toast.error("Aluno não encontrado", {
-        description: "Por favor, busque um aluno válido antes de enviar."
+        description: "Por favor, busque e selecione um aluno válido antes de enviar."
       });
       return;
     }
@@ -160,7 +165,9 @@ const OccurrenceForm = () => {
         description: "A ocorrência foi registrada com sucesso."
       });
       
+      // Limpar o formulário e o aluno selecionado
       setStudent(null);
+      setSearchQuery("");
       form.reset();
     } catch (error) {
       console.error("Erro ao enviar formulário:", error);
@@ -254,17 +261,24 @@ const OccurrenceForm = () => {
                               className="pl-9"
                               value={searchQuery}
                               onChange={(e) => {
-                                setSearchQuery(e.target.value);
-                                field.onChange(e.target.value);
+                                const value = e.target.value;
+                                setSearchQuery(value);
+                                
+                                // Apenas atualizar o valor do campo se não tiver um aluno já selecionado
+                                if (!student) {
+                                  field.onChange(value);
+                                }
+                                
+                                // Se limpar a busca, também limpar o aluno selecionado
+                                if (value === "") {
+                                  setStudent(null);
+                                  field.onChange("");
+                                }
                               }}
                               onFocus={() => {
                                 if (searchQuery.length >= 2) {
                                   setDropdownOpen(true);
                                 }
-                              }}
-                              onBlur={() => {
-                                // Delay hiding the dropdown to allow for clicking on items
-                                setTimeout(() => setDropdownOpen(false), 200);
                               }}
                             />
                           </div>
@@ -386,7 +400,7 @@ const OccurrenceForm = () => {
                 <Button 
                   type="submit"
                   className="bg-cz-red hover:bg-cz-red/90 text-white"
-                  disabled={isLoading || !student}
+                  disabled={isLoading}
                 >
                   {isLoading ? (
                     <>
