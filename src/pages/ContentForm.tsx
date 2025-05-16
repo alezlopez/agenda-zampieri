@@ -56,7 +56,7 @@ const ContentForm = () => {
     setIsLoading(true);
     
     try {
-      const webhookUrl = "https://n8n.colegiozampieri.com/webhook/agendaAvisos";
+      const webhookUrl = "https://n8n.colegiozampieri.com/webhook/agendaConteudo";
       
       const payload = {
         ...values,
