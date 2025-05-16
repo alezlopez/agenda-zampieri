@@ -14,7 +14,7 @@ import { Card } from "@/components/ui/card";
 import { Discipline, Student, OccurrenceTypes } from "@/types";
 import { toast } from "sonner";
 import { getDisciplines, getStudents } from "@/services/supabase";
-import { Search, Loader2, CheckCircle2 } from "lucide-react";
+import { Search, Loader2, CheckCircle2, RefreshCcw } from "lucide-react";
 import {
   Command,
   CommandEmpty,
@@ -24,6 +24,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const occurrenceSchema = z.object({
   disciplina: z.string().min(1, "Selecione uma disciplina"),
@@ -33,6 +34,9 @@ const occurrenceSchema = z.object({
 });
 
 type OccurrenceFormValues = z.infer<typeof occurrenceSchema>;
+
+// URL correta do webhook para o envio de ocorrências
+const WEBHOOK_URL = "https://n8n.colegiozampieri.com/webhook/agendadigital2";
 
 const OccurrenceForm = () => {
   const { user, logout } = useAuth();
@@ -44,6 +48,9 @@ const OccurrenceForm = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 2;
 
   const userName = user?.user_metadata?.name || user?.email;
 
@@ -121,6 +128,45 @@ const OccurrenceForm = () => {
     setDropdownOpen(false);
   };
 
+  // Função para enviar dados para o webhook com timeout e controle de erros
+  const sendOccurrenceData = async (payload: any, attemptNumber: number = 1): Promise<boolean> => {
+    try {
+      console.log(`Attempt ${attemptNumber} for occurrence submission`);
+      
+      // Configurando um timeout de 15 segundos
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      
+      const response = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`Erro de servidor: ${response.status}`);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Erro ao enviar formulário:", error);
+      
+      if (attemptNumber < MAX_RETRIES) {
+        // Wait a bit before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.log(`Retry attempt ${attemptNumber + 1} for occurrence submission`);
+        return sendOccurrenceData(payload, attemptNumber + 1);
+      }
+      
+      throw error;
+    }
+  };
+
   const onSubmit = async (values: OccurrenceFormValues) => {
     if (!student) {
       toast.error("Aluno não encontrado", {
@@ -130,10 +176,9 @@ const OccurrenceForm = () => {
     }
     
     setIsLoading(true);
+    setSubmitError(null);
     
     try {
-      const webhookUrl = "https://n8n.colegiozampieri.com/webhook/agendadigital2";
-      
       const payload = {
         ...values,
         professor: userName,
@@ -144,32 +189,30 @@ const OccurrenceForm = () => {
       
       console.log("Sending payload:", payload);
       
-      const response = await fetch(webhookUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      await sendOccurrenceData(payload);
       
-      if (!response.ok) {
-        throw new Error("Erro ao enviar o formulário");
-      }
-      
-      toast("Ocorrência registrada", {
+      toast.success("Ocorrência registrada", {
         description: "A ocorrência foi registrada com sucesso."
       });
       
       setStudent(null);
       form.reset();
+      setRetryCount(0);
     } catch (error) {
       console.error("Erro ao enviar formulário:", error);
+      setSubmitError("Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.");
+      setRetryCount(prevCount => prevCount + 1);
+      
       toast.error("Erro ao enviar", {
         description: "Ocorreu um erro ao enviar o formulário. Tente novamente."
       });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleRetry = () => {
+    form.handleSubmit(onSubmit)();
   };
 
   return (
@@ -199,6 +242,23 @@ const OccurrenceForm = () => {
       <main className="container mx-auto py-8 px-4">
         <div className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-2xl font-bold mb-6 text-cz-red">Registrar Ocorrência Individual</h2>
+          
+          {submitError && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertDescription className="flex items-center justify-between">
+                <span>{submitError}</span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleRetry}
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCcw className="h-4 w-4" />
+                  Tentar novamente
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
