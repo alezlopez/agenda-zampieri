@@ -157,7 +157,6 @@ export type Database = {
         Row: {
           "Código do Aluno": number
           "Curso do Aluno": string | null
-          filtro: string | null
           "Nome do Aluno": string | null
           "Nome Responsável": string | null
           "WhatsApp Responsavel": number | null
@@ -165,7 +164,6 @@ export type Database = {
         Insert: {
           "Código do Aluno": number
           "Curso do Aluno"?: string | null
-          filtro?: string | null
           "Nome do Aluno"?: string | null
           "Nome Responsável"?: string | null
           "WhatsApp Responsavel"?: number | null
@@ -173,7 +171,6 @@ export type Database = {
         Update: {
           "Código do Aluno"?: number
           "Curso do Aluno"?: string | null
-          filtro?: string | null
           "Nome do Aluno"?: string | null
           "Nome Responsável"?: string | null
           "WhatsApp Responsavel"?: number | null
