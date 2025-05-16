@@ -65,7 +65,7 @@ const AnnouncementForm = () => {
     setIsLoading(true);
     
     try {
-      const webhookUrl = "https://n8n.colegiozampieri.com/webhook/agendadigital3";
+      const webhookUrl = "https://n8n.colegiozampieri.com/webhook/agendaAvisos";
       
       const payload = {
         ...values,

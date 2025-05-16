@@ -1,6 +1,6 @@
 
 // URL for the webhook to send occurrences
-export const WEBHOOK_URL = "https://n8n.colegiozampieri.com/webhook/agendadigital2";
+export const WEBHOOK_URL = "https://n8n.colegiozampieri.com/webhook/agendaConteudo";
 
 /**
  * Sends occurrence data to the webhook with timeout and retry capabilities
